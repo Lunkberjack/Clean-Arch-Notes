@@ -7,7 +7,9 @@ import androidx.lifecycle.viewModelScope
 import com.plcoding.cleanarchitecturenoteapp.feature_note.domain.model.Note
 import com.plcoding.cleanarchitecturenoteapp.feature_note.domain.use_case.NoteUseCases
 import com.plcoding.cleanarchitecturenoteapp.feature_note.domain.util.NoteOrder
+import com.plcoding.cleanarchitecturenoteapp.feature_note.domain.util.OrderType
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -27,6 +29,13 @@ class NotesViewModel @Inject constructor(
     val state: State<NotesState> = _state
 
     private var recentlyDeletedNote: Note? = null
+
+    // So we can keep track of the coroutine job.
+    private var getNotesJob: Job? = null
+
+    init {
+        getNotes(NoteOrder.Date(OrderType.Descending))
+    }
 
     // Depending on the type of event, one action will be performed.
     // These events come from the wrapper class NotesEvent.
@@ -51,7 +60,7 @@ class NotesViewModel @Inject constructor(
                     return
                 }
                 // If we don't return:
-                getNotes()
+                getNotes(event.noteOrder)
             }
             is NotesEvent.DeleteNote -> {
                 // We launch a coroutine.
@@ -81,9 +90,14 @@ class NotesViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Without the Job cancelling, we would retrieve a new instance of the Flow each time we called the
+     * function. We need to cancel the old coroutine that is already observing our database.
+     */
     private fun getNotes(noteOrder: NoteOrder) {
-        noteUseCases.getNotes(noteOrder)
-            .onEach { notes ->
+        getNotesJob?.cancel()
+        getNotesJob = noteUseCases.getNotes(noteOrder) // This will return a Flow from the database
+            .onEach { notes -> // On each emission
                 _state.value = state.value.copy(notes = notes, noteOrder = noteOrder)
             }.launchIn(viewModelScope)
     }
