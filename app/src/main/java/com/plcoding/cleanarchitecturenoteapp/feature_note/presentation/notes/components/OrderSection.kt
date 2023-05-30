@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -18,7 +19,7 @@ fun OrderSection(
     noteOrder: NoteOrder = NoteOrder.Date(OrderType.Descending),
     onOrderChange: (NoteOrder) -> Unit
 ) {
-    Column (
+    Column(
         modifier = modifier
     ) {
         Row(
@@ -26,6 +27,7 @@ fun OrderSection(
         ) {
             DefaultRadioButton(
                 text = "Title",
+                // True if the noteOrder is NoteOrder.Title
                 selected = noteOrder is NoteOrder.Title,
                 onSelect = { onOrderChange(NoteOrder.Title(noteOrder.orderType)) }
             )
@@ -42,5 +44,19 @@ fun OrderSection(
                 onSelect = { onOrderChange(NoteOrder.Color(noteOrder.orderType)) }
             )
         }
-}
+        Spacer(modifier = modifier.height(16.dp))
+        Row(modifier = Modifier.fillMaxWidth()) {
+            DefaultRadioButton(
+                text = "Ascending",
+                selected = noteOrder.orderType is OrderType.Ascending,
+                onSelect = { onOrderChange(noteOrder.copy(OrderType.Ascending)) }
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            DefaultRadioButton(
+                text = "Descending",
+                selected = noteOrder.orderType is OrderType.Descending,
+                onSelect = { onOrderChange(noteOrder.copy(OrderType.Descending)) }
+            )
+        }
+    }
 }
